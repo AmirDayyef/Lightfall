@@ -1,0 +1,232 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5640707732379464983
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 17.669142
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -10.895541
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.8739548
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_Name
+      value: geometry_0.003
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8345455560683721125}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8388941906835524632}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5001244793755770132}
+  m_SourcePrefab: {fileID: 100100000, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+--- !u!1 &4793721275632306246 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+  m_PrefabInstance: {fileID: 5640707732379464983}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &8345455560683721125
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4793721275632306246}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0015852, y: 0.56387293, z: 0.35827014}
+  m_Center: {x: 0.00013130903, y: 0.0071163923, z: 0.0004942119}
+--- !u!114 &8388941906835524632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4793721275632306246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 406ea6012d50bed4d808cc230dbbcb98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 20
+  contactDamage: 10
+  playerTag: Player
+  preferWeaponHitbox: 1
+  defaultWeaponDamage: 10
+  weaponTag: Weapon
+  weaponLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  animateOnHit: 1
+  animTarget: {fileID: 0}
+  hitScale: 1.12
+  hitDuration: 0.12
+  hitShake: 0.035
+  hitCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  animateOnDeath: 1
+  deathScale: 1.25
+  deathDuration: 0.18
+  deathSpinDegrees: 12
+  deathCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spawnShadowPuff: 1
+  puffBurstCount: 30
+  puffDuration: 0.6
+  puffStartLifetime: 0.4
+  puffStartSpeed: {x: 1.5, y: 2.8}
+  puffStartSize: {x: 0.22, y: 0.38}
+  puffSphereRadius: 0.25
+  puffColor: {r: 0, g: 0, b: 0, a: 0.85}
+  puffSortingLayer: Effects
+  spawnHomingSouls: 1
+  soulCount: 10
+  soulLifetime: 1.4
+  soulStartSpread: 1
+  soulArcJitter: 0.6
+  soulStartSize: 0.18
+  soulEndSize: 0.06
+  soulColor: {r: 0, g: 0, b: 0, a: 0.85}
+  soulSortingLayer: Effects
+  extraDespawnTime: 0.3
+  sameColliderHitCooldown: 0.05
+--- !u!114 &5001244793755770132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4793721275632306246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1766134bb64908449a1634a87458385b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerTag: Player
+  playerLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  orbitRadius: 10
+  orbitRadiusJitter: 0.85
+  orbitAngularSpeed: 1.9
+  orbitCenterFollowLerp: 0.15
+  orbitDurationRange: {x: 0.9, y: 1.9}
+  orbitChaseSpeed: 10
+  orbitRelativeToPlayer: 1
+  orbitHeightAbovePlayer: 30
+  orbitWorldY: 4
+  orbitHeightLerp: 10
+  rushSpeed: 12
+  rushContactRadius: 0.45
+  rushHitDamage: 12
+  rushTimeout: 0
+  ascendRelativeToPlayer: 1
+  ascendHeightAbovePlayer: 4
+  ascendWorldY: 9
+  ascendSpeed: 11.5
+  ascendYThreshold: 0.06
+  visual: {fileID: 0}
+  faceTurnSpeed: 14
+  bankAmount: 22
+  bankLerp: 10
+  drawDebug: 0

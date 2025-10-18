@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - Enemy
+  - GOL
+  - Weapon
+  - BOSS
+  - EWeapon
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - Ground
+  - Water
+  - UI
+  - Weapon
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 1106994741
+    locked: 0
+  - name: Platforms
+    uniqueID: 2230420703
+    locked: 0
+  - name: Pickups
+    uniqueID: 3440432843
+    locked: 0
+  - name: Enemies
+    uniqueID: 931239565
+    locked: 0
+  - name: Effects
+    uniqueID: 96818105
+    locked: 0
+  - name: Player
+    uniqueID: 4023345059
+    locked: 0
+  - name: UI
+    uniqueID: 4070425143
+    locked: 0
+  m_RenderingLayers:
+  - Default
