@@ -17,6 +17,8 @@ Killing enemies **restores your health and light** — your lifeline in this wor
 
 ## 🕯️ Gameplay Overview
 
+Light every altar to push back the dark and reach the throne room.
+
 ### Stage 1 — The Cave (Tutorial)
 Your first descent into the dark.  
 Learn to move, jump, and light your first altar to clear the stage.
@@ -29,7 +31,6 @@ You’ll face **ghosts** and **knights**.
 
 ### Stage 3 — The Broken Castle
 Ruins filled with **bats** that swoop down and attack.  
-Light every altar to push back the dark and reach the throne room.
 
 ---
 
@@ -49,7 +50,13 @@ Survive long enough for your light to outlast the darkness.
 
 ---
 
+
 ## 🧠 Developer Note
+
+Halfway through development, I realized 2D animation was **way harder than I thought** —  
+so I scrapped the old version and **restarted the whole game in 3D**.  
+It was a huge risk, but I decided to **shoot for the stars** and make something entirely my own.  
+
 I probably should’ve cloned something like **FNAF** or **DOOM**, come to think of it.  
 I definitely **miscalculated** how much time it would take to build an **original idea from zero**,  
 but I’m happy with how it turned out — and I’ve learned **a lot** from the process.
@@ -58,7 +65,7 @@ but I’m happy with how it turned out — and I’ve learned **a lot** from the
 
 ## 🛠️ Early Development
 
-Here are a few screenshots from early prototypes and testing phases:
+Here are a few screenshots from early prototypes and testing phases in 2D:
 
 | Prototype | Description |
 |------------|--------------|
