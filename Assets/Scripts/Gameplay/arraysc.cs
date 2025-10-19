@@ -2,6 +2,10 @@ using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEditor.Experimental.SceneManagement;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 #endif
 
 [ExecuteAlways]
@@ -22,9 +26,18 @@ public class GridArrayGenerator : MonoBehaviour
     public bool autoRebuildInEditor = true;
     public bool clearBeforeBuild = true;
 
+#if UNITY_EDITOR
+    bool _pendingRebuild;
+#endif
+
     public void GenerateOrRebuild()
     {
         if (!prefab) return;
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying && PrefabUtility.IsPartOfPrefabAsset(gameObject))
+            return;
+#endif
 
         if (clearBeforeBuild) ClearChildren();
 
@@ -42,18 +55,17 @@ public class GridArrayGenerator : MonoBehaviour
         for (int y = 0; y < countY; y++)
         {
             float rowY = y * stepY;
-
             for (int x = 0; x < countX; x++)
             {
                 float colX = x * stepX;
-
                 var pos = basePos + centerOffset + new Vector3(colX, rowY, 0f);
-                GameObject clone;
 
+                GameObject clone;
 #if UNITY_EDITOR
                 if (!Application.isPlaying)
                 {
                     clone = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                    Undo.RegisterCreatedObjectUndo(clone, "GridArray Create");
                     clone.transform.SetPositionAndRotation(pos, baseRot);
                 }
                 else
@@ -71,14 +83,25 @@ public class GridArrayGenerator : MonoBehaviour
 
     public void ClearChildren()
     {
+#if UNITY_EDITOR
+        if (!Application.isPlaying && PrefabUtility.IsPartOfPrefabAsset(gameObject))
+            return;
+#endif
+
         var toDestroy = new System.Collections.Generic.List<GameObject>();
         foreach (Transform child in transform) toDestroy.Add(child.gameObject);
 
         foreach (var go in toDestroy)
         {
 #if UNITY_EDITOR
-            if (!Application.isPlaying) DestroyImmediate(go);
-            else Destroy(go);
+            if (!Application.isPlaying)
+            {
+                Undo.DestroyObjectImmediate(go);
+            }
+            else
+            {
+                Destroy(go);
+            }
 #else
             Destroy(go);
 #endif
@@ -94,10 +117,29 @@ public class GridArrayGenerator : MonoBehaviour
         countX = Mathf.Max(1, countX);
         countY = Mathf.Max(1, countY);
 
-        if (!EditorApplication.isPlayingOrWillChangePlaymode)
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        if (BuildPipeline.isBuildingPlayer) return;
+        if (PrefabUtility.IsPartOfPrefabAsset(gameObject)) return;
+
+        if (_pendingRebuild) return;
+        _pendingRebuild = true;
+
+        EditorApplication.delayCall += () =>
         {
+            if (this == null) return;
+            _pendingRebuild = false;
+
+            var stage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (stage != null && stage.IsPartOfPrefabContents(gameObject)) { }
+
+            if (BuildPipeline.isBuildingPlayer) return;
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            Undo.RegisterFullObjectHierarchyUndo(gameObject, "GridArray Auto Rebuild");
             GenerateOrRebuild();
-        }
+
+            if (!Application.isPlaying)
+                EditorSceneManager.MarkSceneDirty(gameObject.scene);
+        };
     }
 #endif
 }
@@ -121,6 +163,7 @@ public class GridArrayGeneratorEditor : Editor
             {
                 Undo.RegisterFullObjectHierarchyUndo(gen.gameObject, "GridArray Generate");
                 gen.GenerateOrRebuild();
+                EditorSceneManager.MarkSceneDirty(gen.gameObject.scene);
             }
 
             if (GUILayout.Button("Clear Children", GUILayout.Height(28)))
@@ -130,6 +173,7 @@ public class GridArrayGeneratorEditor : Editor
                 {
                     Undo.RegisterFullObjectHierarchyUndo(gen.gameObject, "GridArray Clear");
                     gen.ClearChildren();
+                    EditorSceneManager.MarkSceneDirty(gen.gameObject.scene);
                 }
             }
         }
