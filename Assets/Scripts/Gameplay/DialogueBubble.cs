@@ -1,4 +1,3 @@
-// DialogueBubble.cs  (uses PlayerController3D)
 using UnityEngine;
 using TMPro;
 using System;
@@ -8,24 +7,20 @@ using System.Collections.Generic;
 [DisallowMultipleComponent]
 public class DialogueBubble : MonoBehaviour
 {
-    [Header("Advance Settings")]
-    public float autoAdvanceTime = 0f; // 0 = wait for input, >0 = seconds to wait before auto-advance
+    public float autoAdvanceTime = 0f;
 
-    [Header("Refs")]
     public Transform followTarget;
-    public SpriteRenderer frontCapsule;         // black
-    public SpriteRenderer backCapsule;          // yellow behind
-    public SpriteRenderer bg;                   // legacy single bg -> used as front if frontCapsule not assigned
-    public TextMeshPro textTMP;                 // WORLD-space TMP (not UGUI)
+    public SpriteRenderer frontCapsule;
+    public SpriteRenderer backCapsule;
+    public SpriteRenderer bg;
+    public TextMeshPro textTMP;
     public Transform contentRoot;
 
-    [Header("Layout")]
-    public Vector2 padding = new Vector2(0.24f, 0.16f); // WORLD units
+    public Vector2 padding = new Vector2(0.24f, 0.16f);
     public float lineHeight = 0.26f;
     public Vector3 offset = new Vector3(0f, 1.4f, 0f);
-    public float maxWidth = 6f;                         // WORLD wrap width
+    public float maxWidth = 6f;
 
-    [Header("Behaviour")]
     public bool faceCamera = true;
     public bool clampToTarget = true;
     public float followLerp = 10f;
@@ -33,12 +28,10 @@ public class DialogueBubble : MonoBehaviour
     public float fadeIn = 0.12f;
     public float fadeOut = 0.10f;
 
-    [Header("Typewriter")]
     public float defaultCPS = 40f;
     public float fastForwardMult = 3.5f;
     public KeyCode advanceKey = KeyCode.Space;
 
-    [Header("Rendering")]
     public Color frontColor = Color.black;
     public Color backColor = new Color(1f, 0.9f, 0.1f, 1f);
     public Color textColor = Color.white;
@@ -48,27 +41,27 @@ public class DialogueBubble : MonoBehaviour
     [System.Serializable]
     public struct Line
     {
-        [TextArea(1, 4)] public string text;
+        public string text;
         public float cps;
         public AudioClip voiceClip;
         [Range(0.01f, 0.25f)] public float voiceEvery;
-
-        [Header("Control")]
-        public bool lockMovement; // per-line lock
+        public bool lockMovement;
     }
 
-    [Header("Audio")]
     public AudioSource sfxSource;
     [Range(0.01f, 0.25f)] public float defaultVoiceInterval = 0.06f;
 
-    [Header("Player Movement Locking")]
-    public PlayerController3D playerController;   // << changed
-    [Tooltip("If true, lock controls for the entire dialogue (from show to hide) in addition to any per-line locks.")]
+    public PlayerController3D playerController;
     public bool lockControlsForWholeDialogue = false;
-    [Tooltip("If true, force-enable PlayerController3D at the end of the dialogue (ignores whatever state it had before).")]
     public bool alwaysEnableControllerAtEnd = false;
 
-    // runtime
+    public Behaviour[] extraControllersToDisable;
+
+    public Behaviour comboAttackController;
+    public bool autoFindComboOnPlayer = true;
+    public string comboTypeName = "ComboAttackController";
+    public bool watchdogComboWhileLocked = true;
+
     Camera _cam;
     MaterialPropertyBlock _mpbFront, _mpbBack;
     Coroutine _seqCo;
@@ -77,15 +70,16 @@ public class DialogueBubble : MonoBehaviour
     readonly Queue<Line> _queue = new Queue<Line>();
     float _nextBleep;
 
-    // movement-lock bookkeeping (supports nesting)
     bool _playerPrevEnabled = true;
     int _lockDepth = 0;
 
-    // blocking helpers
+    readonly Dictionary<Behaviour, bool> _extraPrevEnabled = new Dictionary<Behaviour, bool>();
+    bool _comboPrevEnabled = true;
+    bool _hasComboPrev = false;
+
     Action _onSeqDone;
     bool _seqDoneFlag;
 
-    // unit-correct sizing caches
     Vector2 _frontBaseWorldSize, _backBaseWorldSize;
     Vector3 _frontBaseLocalScale, _backBaseLocalScale;
     const float EPS = 1e-4f;
@@ -94,18 +88,24 @@ public class DialogueBubble : MonoBehaviour
     void Awake()
     {
         if (!contentRoot) contentRoot = transform;
-
-        if (!frontCapsule && bg) frontCapsule = bg; // legacy
-
+        if (!frontCapsule && bg) frontCapsule = bg;
         if (!frontCapsule) frontCapsule = GetComponentInChildren<SpriteRenderer>(true);
         if (!textTMP) textTMP = GetComponentInChildren<TextMeshPro>(true);
         if (!sfxSource) sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
-        sfxSource.spatialBlend = 1f;
-        sfxSource.minDistance = 2f; sfxSource.maxDistance = 12f;
+        sfxSource.spatialBlend = 0f;
 
         if (!playerController)
-            playerController = FindFirstObjectByType<PlayerController3D>(); // << changed
+        {
+#if UNITY_2023_1_OR_NEWER
+            playerController = FindFirstObjectByType<PlayerController3D>();
+#else
+            playerController = FindObjectOfType<PlayerController3D>();
+#endif
+        }
+
+        if (!comboAttackController && autoFindComboOnPlayer && playerController)
+            comboAttackController = FindByTypeNameUnder(comboTypeName, playerController.gameObject);
 
         _cam = Camera.main;
         _mpbFront = new MaterialPropertyBlock();
@@ -163,9 +163,10 @@ public class DialogueBubble : MonoBehaviour
             Vector3 fwd = _cam.transform.forward;
             transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
         }
-    }
 
-    // ===== Public API =====
+        if (_lockDepth > 0 && watchdogComboWhileLocked && comboAttackController)
+            if (comboAttackController.enabled) comboAttackController.enabled = false;
+    }
 
     public void ShowLines(IEnumerable<Line> lines)
     {
@@ -193,23 +194,17 @@ public class DialogueBubble : MonoBehaviour
     {
         if (_seqCo != null) StopCoroutine(_seqCo);
         _seqCo = null;
-
         ClearText();
         SetAlpha(0f);
         contentRoot.localScale = Vector3.one * appearScale;
         _isShowing = false;
         _queue.Clear();
-
-        // release any locks and (optionally) force-enable
         ForceUnlockIfNeeded();
     }
-
-    // ===== Internals =====
 
     void StartLinesInternal(IEnumerable<Line> lines)
     {
         ClearText();
-
         _queue.Clear();
         foreach (var l in lines) _queue.Enqueue(l);
         if (_seqCo != null) StopCoroutine(_seqCo);
@@ -219,16 +214,12 @@ public class DialogueBubble : MonoBehaviour
     IEnumerator RunSequence()
     {
         _requestSkip = false;
-
-        // sequence-wide lock (optional)
         if (lockControlsForWholeDialogue) PushMovementLock();
-
         yield return ShowAnim();
 
         while (_queue.Count > 0)
         {
             var l = _queue.Dequeue();
-
             if (l.lockMovement) PushMovementLock();
             yield return PlayLine(l);
             yield return WaitAdvance();
@@ -238,13 +229,8 @@ public class DialogueBubble : MonoBehaviour
         ClearText();
         yield return HideAnim();
         _seqCo = null;
-
-        // sequence lock release
         if (lockControlsForWholeDialogue) PopMovementLock();
-
-        // safety: release any leftover locks and optionally force enable
         ForceUnlockIfNeeded();
-
         _onSeqDone?.Invoke();
         _onSeqDone = null;
     }
@@ -255,7 +241,6 @@ public class DialogueBubble : MonoBehaviour
 
         textTMP.maxVisibleCharacters = 0;
         textTMP.text = l.text;
-
         textTMP.ForceMeshUpdate();
         FitBackgroundToText();
 
@@ -399,19 +384,14 @@ public class DialogueBubble : MonoBehaviour
         {
             float sx = Mathf.Clamp(bubbleWorld.x / _frontBaseWorldSize.x, scaleClamp.x, scaleClamp.y);
             float sy = Mathf.Clamp(bubbleWorld.y / _frontBaseWorldSize.y, scaleClamp.x, scaleClamp.y);
-            frontCapsule.transform.localScale = new Vector3(_frontBaseLocalScale.x * sx,
-                                                            _frontBaseLocalScale.y * sy,
-                                                            _frontBaseLocalScale.z);
+            frontCapsule.transform.localScale = new Vector3(_frontBaseLocalScale.x * sx, _frontBaseLocalScale.y * sy, _frontBaseLocalScale.z);
         }
 
         if (backCapsule && backCapsule.sprite && _backBaseWorldSize.x > EPS && _backBaseWorldSize.y > EPS)
         {
             float sx = Mathf.Clamp((bubbleWorld.x * backScaleMult) / _backBaseWorldSize.x, scaleClamp.x, scaleClamp.y);
             float sy = Mathf.Clamp((bubbleWorld.y * backScaleMult) / _backBaseWorldSize.y, scaleClamp.x, scaleClamp.y);
-            backCapsule.transform.localScale = new Vector3(_backBaseLocalScale.x * sx,
-                                                           _backBaseLocalScale.y * sy,
-                                                           _backBaseLocalScale.z);
-
+            backCapsule.transform.localScale = new Vector3(_backBaseLocalScale.x * sx, _backBaseLocalScale.y * sy, _backBaseLocalScale.z);
             var lp = backCapsule.transform.localPosition;
             backCapsule.transform.localPosition = new Vector3(lp.x, lp.y, Mathf.Abs(backZOffset));
         }
@@ -426,34 +406,90 @@ public class DialogueBubble : MonoBehaviour
         return 1 + c3 * Mathf.Pow(x - 1, 3) + c1 * Mathf.Pow(x - 1, 2);
     }
 
-    // ===== Lock helpers & fail-safe =====
     void PushMovementLock()
     {
-        if (!playerController) return;
-        if (_lockDepth == 0) _playerPrevEnabled = playerController.enabled;
+        if (playerController)
+        {
+            if (_lockDepth == 0) _playerPrevEnabled = playerController.enabled;
+            playerController.enabled = false;
+        }
+
+        if (_lockDepth == 0 && extraControllersToDisable != null)
+        {
+            _extraPrevEnabled.Clear();
+            foreach (var b in extraControllersToDisable)
+            {
+                if (!b) continue;
+                _extraPrevEnabled[b] = b.enabled;
+                b.enabled = false;
+            }
+        }
+
+        if (_lockDepth == 0 && comboAttackController == null && autoFindComboOnPlayer && playerController)
+            comboAttackController = FindByTypeNameUnder(comboTypeName, playerController.gameObject);
+
+        if (_lockDepth == 0 && comboAttackController)
+        {
+            _hasComboPrev = true;
+            _comboPrevEnabled = comboAttackController.enabled;
+            comboAttackController.enabled = false;
+            var mb = comboAttackController as MonoBehaviour;
+            if (mb) mb.StopAllCoroutines();
+        }
+
         _lockDepth++;
-        playerController.enabled = false;
     }
 
     void PopMovementLock()
     {
-        if (!playerController) return;
         if (_lockDepth <= 0) return;
         _lockDepth--;
+
         if (_lockDepth == 0)
         {
-            // restore to previous state OR force enable if requested
-            playerController.enabled = alwaysEnableControllerAtEnd ? true : _playerPrevEnabled;
+            if (playerController)
+                playerController.enabled = alwaysEnableControllerAtEnd ? true : _playerPrevEnabled;
+
+            if (extraControllersToDisable != null)
+            {
+                foreach (var kv in _extraPrevEnabled)
+                {
+                    var b = kv.Key;
+                    if (!b) continue;
+                    b.enabled = alwaysEnableControllerAtEnd ? true : kv.Value;
+                }
+                _extraPrevEnabled.Clear();
+            }
+
+            if (comboAttackController && _hasComboPrev)
+                comboAttackController.enabled = alwaysEnableControllerAtEnd ? true : _comboPrevEnabled;
+
+            _hasComboPrev = false;
         }
     }
 
     void ForceUnlockIfNeeded()
     {
-        if (!playerController) return;
-
         while (_lockDepth > 0) _lockDepth--;
 
-        playerController.enabled = alwaysEnableControllerAtEnd ? true : _playerPrevEnabled;
+        if (playerController)
+            playerController.enabled = alwaysEnableControllerAtEnd ? true : _playerPrevEnabled;
+
+        if (extraControllersToDisable != null)
+        {
+            foreach (var kv in _extraPrevEnabled)
+            {
+                var b = kv.Key;
+                if (!b) continue;
+                b.enabled = alwaysEnableControllerAtEnd ? true : kv.Value;
+            }
+            _extraPrevEnabled.Clear();
+        }
+
+        if (comboAttackController && _hasComboPrev)
+            comboAttackController.enabled = alwaysEnableControllerAtEnd ? true : _comboPrevEnabled;
+
+        _hasComboPrev = false;
     }
 
     void ClearText()
@@ -463,5 +499,19 @@ public class DialogueBubble : MonoBehaviour
             textTMP.text = "";
             textTMP.maxVisibleCharacters = 0;
         }
+    }
+
+    Behaviour FindByTypeNameUnder(string typeName, GameObject root)
+    {
+        if (!root || string.IsNullOrEmpty(typeName)) return null;
+        var mbs = root.GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < mbs.Length; i++)
+        {
+            var mb = mbs[i];
+            if (!mb) continue;
+            if (mb.GetType().Name == typeName)
+                return (Behaviour)mb;
+        }
+        return null;
     }
 }

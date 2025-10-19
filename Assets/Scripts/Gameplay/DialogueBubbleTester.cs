@@ -1,4 +1,3 @@
-// DialogueBubbleTesterPerLine.cs  (uses PlayerController3D)
 using UnityEngine;
 using System.Collections;
 
@@ -8,9 +7,9 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
     public enum StartMode
     {
         OnEnable,
-        OnTriggerEnter3D,   // 3D Trigger
-        OnTriggerEnter2D,   // 2D Trigger
-        OnCollisionEnter2D, // 2D Collision (non-trigger)
+        OnTriggerEnter3D,
+        OnTriggerEnter2D,
+        OnCollisionEnter2D,
         Manual
     }
 
@@ -21,8 +20,8 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
         public DialogueBubble.Line line;
 
         [Header("Per-line timing")]
-        [Min(0)] public float preDelay;     // before this line starts
-        [Min(0)] public float postDelay;    // after this line ends (after fade-out)
+        [Min(0)] public float preDelay;
+        [Min(0)] public float postDelay;
 
         [Header("Per-line movement lock (outside the line)")]
         public bool lockDuringPre;
@@ -35,9 +34,9 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
     }
 
     [Header("Refs")]
-    public DialogueBubble bubble;       // assign
-    public Transform followTarget;      // optional (e.g., head)
-    public PlayerController3D player;   // << changed
+    public DialogueBubble bubble;
+    public Transform followTarget;
+    public PlayerController3D player;
 
     [Header("Start Mode")]
     public StartMode startMode = StartMode.OnTriggerEnter2D;
@@ -50,10 +49,9 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
     public Step[] steps;
 
     [Header("Global bubble defaults")]
-    public float defaultAutoAdvanceTime = 0f; // 0 = press to advance
+    public float defaultAutoAdvanceTime = 0f; 
     public KeyCode defaultAdvanceKey = KeyCode.Space;
 
-    // runtime
     bool _running;
     float _lastRun = -999f;
     bool _prevEnabled = true;
@@ -77,7 +75,6 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
         if (startMode == StartMode.OnEnable) TryStart();
     }
 
-    // -------- 3D Trigger ----------
     void OnTriggerEnter(Collider other)
     {
         if (startMode != StartMode.OnTriggerEnter3D) return;
@@ -85,7 +82,6 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
         TryStart();
     }
 
-    // -------- 2D Trigger ----------
     void OnTriggerEnter2D(Collider2D other)
     {
         if (startMode != StartMode.OnTriggerEnter2D) return;
@@ -93,7 +89,6 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
         TryStart();
     }
 
-    // -------- 2D Collision (non-trigger) ----------
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (startMode != StartMode.OnCollisionEnter2D) return;
@@ -101,7 +96,6 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
         TryStart();
     }
 
-    /// Call if StartMode = Manual
     public void TryStart()
     {
         if (_running) return;
@@ -123,7 +117,6 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
         {
             var s = steps[i];
 
-            // --- PRE ---
             if (s.preDelay > 0f)
             {
                 if (s.lockDuringPre) PushLock();
@@ -131,13 +124,11 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
                 if (s.lockDuringPre) PopLock();
             }
 
-            // --- LINE ---
             bubble.autoAdvanceTime = s.autoAdvance ? Mathf.Max(0f, s.autoAdvanceSeconds) : 0f;
             single[0] = s.line;
             yield return bubble.ShowLinesAndWait(single);
-            bubble.autoAdvanceTime = savedAuto; // restore default
+            bubble.autoAdvanceTime = savedAuto;
 
-            // --- POST ---
             if (s.postDelay > 0f)
             {
                 if (s.lockDuringPost) PushLock();
@@ -160,7 +151,6 @@ public class DialogueBubbleTesterPerLine : MonoBehaviour
         }
     }
 
-    // ---- movement lock helpers (outside-the-line) ----
     void PushLock()
     {
         if (!player) return;

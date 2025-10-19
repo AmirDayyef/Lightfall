@@ -1,52 +1,44 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic;   // <-- needed for Dictionary
+using UnityEngine.Audio;
+using System.Collections.Generic;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
 public class PlayerController3D : MonoBehaviour
 {
+    [HideInInspector] public bool movementLocked = false;
 
-    [Header("Light / Health")]
     public float maxLight = 100f;
     public float currentLight = 100f;
     public bool invulnerable = false;
 
-    [Header("Movement")]
     public float moveSpeed = 7f;
     public float airControlMult = 0.9f;
     public float jumpForce = 13f;
 
-    [Header("Jump Assist")]
     public float coyoteTime = 0.12f;
     public float jumpBufferTime = 0.12f;
 
-    [Header("Grounding")]
     public LayerMask groundMask;
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
     public float groundSkin = 0.07f;
 
-    [Header("Visual / Animator")]
     [SerializeField] Animator anim;
     public Transform visual;
 
-    [Header("Facing Lerp")]
     public float rightYaw = 90f;
     public float leftYaw = 270f;
     public bool onlyLerpWhenMoving = true;
     public float yawLerpSpeedDegPerSec = 720f;
 
-    [Header("Anim Triggers")]
     public string jumpTrigger = "Jump";
 
-    [Header("Axis Lock")]
     public bool freezeZAxis = true;
 
-    // ------------ Blocking -------------
-    [Header("Blocking")]
     public KeyCode blockKey = KeyCode.Mouse1;
     [Range(0f, 1f)] public float blockDamageMultiplier = 0.5f;
     public string blockBoolParam = "Blocking";
@@ -54,10 +46,7 @@ public class PlayerController3D : MonoBehaviour
     public string blockEndTrigger = "BlockEnd";
     public float blockMoveMult = 0.7f;
     public bool isBlocking { get; private set; }
-    // -----------------------------------
 
-    // ------------ Life / Light coupling -------------
-    [Header("Life / Light Coupling")]
     public float maxHP = 100f;
     public float currentHP = 100f;
 
@@ -67,22 +56,17 @@ public class PlayerController3D : MonoBehaviour
     public float lightRangeAtFull = 12f;
     public float lightRangeAtZero = 6f;
 
-    [Header("Screen/UI Dim")]
     public CanvasGroup screenDimGroup;
     [Range(0f, 1f)] public float uiMaxDimAtZeroHP = 0.55f;
     [Range(0f, 1f)] public float uiExtraHitDim = 0.25f;
 
-    [Header("Adaptive Damage (lower when hurt)")]
     public float incomingDamageMultAtFull = 1.0f;
     public float incomingDamageMultAtZero = 0.6f;
 
-    [Header("Post-Hit Mitigation & Slow")]
     [Range(0f, 1f)] public float postHitDamageMultiplier = 0.6f;
     public float hitSlowDuration = 0.50f;
     public float hitSlowMoveMult = 0.65f;
 
-    // --------- EWeapon damage detection ----------
-    [Header("EWeapon Damage Detection")]
     public string enemyWeaponTag = "EWeapon";
     public float defaultWeaponDamage = 10f;
     public float weaponRepeatWindow = 0.20f;
@@ -90,20 +74,50 @@ public class PlayerController3D : MonoBehaviour
     public bool autoCreateHurtboxTrigger = true;
     public Vector3 hurtboxLocalCenter = new Vector3(0f, 1.0f, 0f);
     public Vector3 hurtboxSize = new Vector3(0.7f, 1.8f, 0.5f);
-    // ------------------------------------------------
 
-    // --------- Death / Outro ---------
-    [Header("Death / Outro")]
     public bool autoFullBlackOnDeath = true;
     public float deathFullBlackDuration = 1.2f;
 
     public Image endOverlayImage;
     public float endImageFadeDuration = 0.8f;
+    public float delayBeforeEndImage = 0.6f;
     public float restartDelayAfterImage = 1.0f;
 
     public string restartSceneName = "";
     [Range(0.8f, 1.0f)] public float fullBlackAlphaThreshold = 0.98f;
-    // ---------------------------------
+
+    public bool clampX = true;
+    public float minX = -20f;
+    public float maxX = 20f;
+    public float xPadding = 0.0f;
+
+    public AudioMixerGroup sfxMixerGroup;
+
+    public AudioClip[] footstepClips;
+    public Vector2 footstepPitchRange = new Vector2(0.95f, 1.05f);
+    [Range(0f, 1f)] public float footstepVolume = 0.4f;
+    public float footstepSpeedThreshold = 0.7f;
+    public float stepDistance = 1.1f;
+    public float stepMinInterval = 0.18f;
+
+    public AudioClip[] jumpClips;
+    public Vector2 jumpPitchRange = new Vector2(0.98f, 1.05f);
+    [Range(0f, 1f)] public float jumpVolume = 0.5f;
+
+    public AudioClip[] landClips;
+    public Vector2 landPitchRange = new Vector2(0.95f, 1.05f);
+    [Range(0f, 1f)] public float landVolume = 0.5f;
+
+    public AudioClip[] attackSwingClips;
+    public Vector2 attackSwingPitchRange = new Vector2(0.95f, 1.05f);
+    [Range(0f, 1f)] public float attackSwingVolume = 0.7f;
+
+    public AudioClip[] deathClips;
+    public Vector2 deathPitchRange = new Vector2(0.95f, 1.05f);
+    [Range(0f, 1f)] public float deathVolume = 1.0f;
+
+    public string deadTag = "Dead";
+    public float deathLift = 2f;
 
     Rigidbody rb;
     CapsuleCollider capsule;
@@ -117,12 +131,15 @@ public class PlayerController3D : MonoBehaviour
     float targetYaw;
     float hitEffectEndTime = -999f;
 
-    // ✅ Correctly declared dictionary (this was your line ~123)
-    private readonly Dictionary<int, float> _lastHitTime = new Dictionary<int, float>();
+    readonly Dictionary<int, float> _lastHitTime = new Dictionary<int, float>();
 
-    // outro state
     bool _deathSequenceStarted = false;
     bool _lockPresentation = false;
+
+    AudioSource _sfx;
+    bool _wasGrounded;
+    float _stepDistanceAccu;
+    float _lastStepTime;
 
     void Awake()
     {
@@ -139,9 +156,11 @@ public class PlayerController3D : MonoBehaviour
         targetYaw = t.eulerAngles.y;
 
         currentHP = Mathf.Clamp(currentHP, 0f, maxHP);
-        ApplyPresentationFromHP(0f, forceApply: true);
+        ApplyPresentationFromHP(0f, true);
 
         if (autoCreateHurtboxTrigger) CreateOrUpdateHurtbox();
+
+        if (screenDimGroup) screenDimGroup.alpha = 0f;
 
         if (endOverlayImage)
         {
@@ -150,6 +169,15 @@ public class PlayerController3D : MonoBehaviour
             endOverlayImage.color = c;
             if (!endOverlayImage.gameObject.activeSelf) endOverlayImage.gameObject.SetActive(true);
         }
+
+        _sfx = gameObject.AddComponent<AudioSource>();
+        _sfx.playOnAwake = false;
+        _sfx.loop = false;
+        if (sfxMixerGroup) _sfx.outputAudioMixerGroup = sfxMixerGroup;
+
+        _wasGrounded = IsGrounded();
+        _stepDistanceAccu = 0f;
+        _lastStepTime = -999f;
     }
 
     void CreateOrUpdateHurtbox()
@@ -177,12 +205,18 @@ public class PlayerController3D : MonoBehaviour
 
     void Update()
     {
-        // Input
-        inX = Input.GetAxisRaw("Horizontal");
-        if (Input.GetButtonDown("Jump")) lastJumpPressedTime = Time.time;
-        jumpHeld = Input.GetButton("Jump");
+        if (!movementLocked)
+        {
+            inX = Input.GetAxisRaw("Horizontal");
+            if (Input.GetButtonDown("Jump")) lastJumpPressedTime = Time.time;
+            jumpHeld = Input.GetButton("Jump");
+        }
+        else
+        {
+            inX = 0f;
+            jumpHeld = false;
+        }
 
-        // Blocking
         bool wasBlocking = isBlocking;
         isBlocking = Input.GetKey(blockKey);
         if (anim)
@@ -192,7 +226,6 @@ public class PlayerController3D : MonoBehaviour
             else if (wasBlocking && !isBlocking && !string.IsNullOrEmpty(blockEndTrigger)) { anim.ResetTrigger(blockEndTrigger); anim.SetTrigger(blockEndTrigger); }
         }
 
-        // Movement with HP/block/hit scaling
         float hpFrac = (maxHP <= 0.0001f) ? 0f : (currentHP / maxHP);
         float healthMoveScale = Mathf.Lerp(0.6f, 1.0f, hpFrac);
         float hitMoveScale = (Time.time < hitEffectEndTime) ? Mathf.Clamp01(hitSlowMoveMult) : 1f;
@@ -206,17 +239,23 @@ public class PlayerController3D : MonoBehaviour
             float accel = IsGrounded() ? 1f : Mathf.Clamp01(airControlMult);
             Vector3 targetPlanar = inputDir * effectiveMoveSpeed;
             Vector3 newPlanar = Vector3.Lerp(planarVel, targetPlanar, accel);
+#if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = new Vector3(newPlanar.x, rb.linearVelocity.y, 0f);
+#else
+            rb.velocity = new Vector3(newPlanar.x, rb.velocity.y, 0f);
+#endif
         }
         else
         {
+#if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = new Vector3(externalPlanarVel.x, rb.linearVelocity.y, 0f);
+#else
+            rb.velocity = new Vector3(externalPlanarVel.x, rb.velocity.y, 0f);
+#endif
         }
 
-        // Jump
         if (CanJump()) DoJump();
 
-        // Facing
         if (!onlyLerpWhenMoving || Mathf.Abs(inX) > 0.01f)
         {
             if (inX > 0.01f) targetYaw = rightYaw;
@@ -224,55 +263,114 @@ public class PlayerController3D : MonoBehaviour
         }
         LerpYawTowardsTarget();
 
-        // Animator
         if (anim)
         {
+#if UNITY_6000_0_OR_NEWER
             float speedAbs = Mathf.Abs(rb.linearVelocity.x);
-            anim.SetFloat("Speed", speedAbs);
             anim.SetFloat("YVel", rb.linearVelocity.y);
+#else
+            float speedAbs = Mathf.Abs(rb.velocity.x);
+            anim.SetFloat("YVel", rb.velocity.y);
+#endif
+            anim.SetFloat("Speed", speedAbs);
             anim.SetBool("Grounded", IsGrounded());
             anim.SetFloat("HPFrac", hpFrac);
         }
 
-        // HP presentation
         if (!_lockPresentation)
-            ApplyPresentationFromHP(Time.deltaTime, forceApply: false);
+            ApplyPresentationFromHP(Time.deltaTime, false);
 
-        // Death/outro triggers
+        HandleFootstepsAndLanding();
+
         if (autoFullBlackOnDeath && !_deathSequenceStarted && currentHP <= 0f)
         {
             _deathSequenceStarted = true;
-            StartCoroutine(DeathOutroRoutine());
+            PlayRandomOneShot(deathClips, deathVolume, deathPitchRange);
+            OnDeathFreezeLiftAndRetag();
+            StartCoroutine(DeathOutroRoutine(false));
         }
         if (!_deathSequenceStarted && screenDimGroup && screenDimGroup.alpha >= fullBlackAlphaThreshold)
         {
             _deathSequenceStarted = true;
-            StartCoroutine(DeathOutroRoutine(skipToFullBlack: true));
+            PlayRandomOneShot(deathClips, deathVolume, deathPitchRange);
+            OnDeathFreezeLiftAndRetag();
+            StartCoroutine(DeathOutroRoutine(true));
         }
     }
 
-    System.Collections.IEnumerator DeathOutroRoutine(bool skipToFullBlack = false)
+    void LateUpdate()
+    {
+        if (!clampX || rb == null) return;
+
+        float a = Mathf.Min(minX, maxX);
+        float b = Mathf.Max(minX, maxX);
+
+        float clampMin = a + Mathf.Max(0f, xPadding);
+        float clampMax = b - Mathf.Max(0f, xPadding);
+
+        if (clampMin > clampMax)
+        {
+            float mid = (a + b) * 0.5f;
+            clampMin = clampMax = mid;
+        }
+
+        Vector3 p = rb.position;
+        float clampedX = Mathf.Clamp(p.x, clampMin, clampMax);
+
+        if (!Mathf.Approximately(clampedX, p.x))
+        {
+            p.x = clampedX;
+            if (freezeZAxis) p.z = 0f;
+            rb.position = p;
+#if UNITY_6000_0_OR_NEWER
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+#else
+            rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+#endif
+        }
+    }
+
+    void OnDeathFreezeLiftAndRetag()
+    {
+        invulnerable = true;
+        movementLocked = true;
+        transform.position += Vector3.up * Mathf.Max(0f, deathLift);
+#if UNITY_6000_0_OR_NEWER
+        if (rb) { rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+#else
+        if (rb) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+#endif
+        if (rb) rb.constraints = RigidbodyConstraints.FreezeAll;
+        gameObject.tag = string.IsNullOrEmpty(deadTag) ? gameObject.tag : deadTag;
+    }
+
+    System.Collections.IEnumerator DeathOutroRoutine(bool skipToFullBlack)
     {
         _lockPresentation = true;
 
-        // 1) ramp to full black
         if (screenDimGroup)
         {
-            float startA = screenDimGroup.alpha;
-            float t = 0f;
-            float dur = Mathf.Max(0.01f, deathFullBlackDuration);
-            if (skipToFullBlack) t = dur;
-
-            while (t < dur)
+            if (skipToFullBlack)
             {
-                t += Time.deltaTime;
-                screenDimGroup.alpha = Mathf.Lerp(startA, 1f, t / dur);
-                yield return null;
+                screenDimGroup.alpha = 1f;
             }
-            screenDimGroup.alpha = 1f;
+            else
+            {
+                float startA = screenDimGroup.alpha;
+                float t = 0f;
+                float dur = Mathf.Max(0.01f, deathFullBlackDuration);
+                while (t < dur)
+                {
+                    t += Time.deltaTime;
+                    screenDimGroup.alpha = Mathf.Lerp(startA, 1f, t / dur);
+                    yield return null;
+                }
+                screenDimGroup.alpha = 1f;
+            }
         }
 
-        // 2) fade in overlay image
+        if (delayBeforeEndImage > 0f) yield return new WaitForSeconds(delayBeforeEndImage);
+
         if (endOverlayImage)
         {
             var c = endOverlayImage.color;
@@ -289,7 +387,6 @@ public class PlayerController3D : MonoBehaviour
             c.a = 1f; endOverlayImage.color = c;
         }
 
-        // 3) wait then restart
         if (restartDelayAfterImage > 0f)
             yield return new WaitForSeconds(restartDelayAfterImage);
 
@@ -316,9 +413,14 @@ public class PlayerController3D : MonoBehaviour
     void DoJump()
     {
         lastJumpPressedTime = -999f;
+#if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, 0f);
+#else
+        rb.velocity = new Vector3(rb.velocity.x, 0f, 0f);
+#endif
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         if (anim && !string.IsNullOrEmpty(jumpTrigger)) { anim.ResetTrigger(jumpTrigger); anim.SetTrigger(jumpTrigger); }
+        PlayRandomOneShot(jumpClips, jumpVolume, jumpPitchRange);
     }
 
     bool IsGrounded()
@@ -359,14 +461,31 @@ public class PlayerController3D : MonoBehaviour
             Gizmos.matrix = m;
             Gizmos.DrawWireCube(Vector3.zero, hurtboxSize);
         }
+
+        if (clampX)
+        {
+            float a = Mathf.Min(minX, maxX);
+            float b = Mathf.Max(minX, maxX);
+            Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.8f);
+
+            Vector3 baseY = Application.isPlaying
+                ? (rb ? rb.position : transform.position)
+                : transform.position;
+
+            Vector3 from = new Vector3(a, baseY.y - 50f, freezeZAxis ? 0f : baseY.z);
+            Vector3 to = new Vector3(a, baseY.y + 50f, freezeZAxis ? 0f : baseY.z);
+            Gizmos.DrawLine(from, to);
+            from.x = b; to.x = b;
+            Gizmos.DrawLine(from, to);
+        }
 #endif
     }
 
-    // ----------------- PUBLIC ATTACK HOOKS -----------------
     public void AttackMotionBegin(float forwardSpeed)
     {
         externalPlanarAuthority = true;
         externalPlanarVel = new Vector3(transform.right.x * forwardSpeed, 0f, 0f);
+        AttackSwingSFX();
     }
     public void AttackMotionSet(float forwardSpeed)
     {
@@ -374,9 +493,8 @@ public class PlayerController3D : MonoBehaviour
         externalPlanarVel = new Vector3(transform.right.x * forwardSpeed, 0f, 0f);
     }
     public void AttackMotionEnd() { externalPlanarAuthority = false; }
-    // -------------------------------------------------------
+    public void AttackSwingSFX() => PlayRandomOneShot(attackSwingClips, attackSwingVolume, attackSwingPitchRange);
 
-    // ----------------- DAMAGE API ------------------
     public float ApplyDamage(float rawDamage)
     {
         if (invulnerable) return 0f;
@@ -396,7 +514,7 @@ public class PlayerController3D : MonoBehaviour
         hitEffectEndTime = Time.time + hitSlowDuration;
 
         if (!_lockPresentation)
-            ApplyPresentationFromHP(0f, forceApply: true);
+            ApplyPresentationFromHP(0f, true);
 
         return dmg;
     }
@@ -418,7 +536,7 @@ public class PlayerController3D : MonoBehaviour
         if (amount <= 0f || currentHP <= 0f) return;
         currentHP = Mathf.Clamp(currentHP + amount, 0f, maxHP);
         if (!_lockPresentation)
-            ApplyPresentationFromHP(0f, forceApply: true);
+            ApplyPresentationFromHP(0f, true);
     }
 
     void ApplyPresentationFromHP(float dt, bool forceApply)
@@ -426,11 +544,8 @@ public class PlayerController3D : MonoBehaviour
         if (!screenDimGroup && !playerLight) return;
 
         float hpFrac = (maxHP <= 0.0001f) ? 0f : (currentHP / maxHP);
-
-        // Base dim from HP
         float baseDim = Mathf.Lerp(uiMaxDimAtZeroHP, 0f, hpFrac);
 
-        // Extra temp dim when recently hit
         float extra = 0f;
         if (Time.time < hitEffectEndTime)
         {
@@ -438,7 +553,6 @@ public class PlayerController3D : MonoBehaviour
             extra = uiExtraHitDim * Mathf.Clamp01(t);
         }
 
-        // UI dim
         if (screenDimGroup && !_lockPresentation)
         {
             float targetAlpha = Mathf.Clamp01(baseDim + extra);
@@ -446,7 +560,6 @@ public class PlayerController3D : MonoBehaviour
             else screenDimGroup.alpha = Mathf.MoveTowards(screenDimGroup.alpha, targetAlpha, dt * 3.5f);
         }
 
-        // Player light
         if (playerLight)
         {
             float targetIntensity = Mathf.Lerp(lightIntensityAtZero, lightIntensityAtFull, hpFrac);
@@ -464,9 +577,7 @@ public class PlayerController3D : MonoBehaviour
             }
         }
     }
-    // ------------------------------------------------
 
-    // --------------- EWeapon detection hooks ---------------
     void OnCollisionEnter(Collision c)
     {
         if (c.collider) TryHitFromCollider(c.collider);
@@ -489,24 +600,98 @@ public class PlayerController3D : MonoBehaviour
         ApplyDamage(defaultWeaponDamage);
     }
 
-
-    // Called by pickups (e.g., light orbs) and healing effects
     public void AddLight(float amount)
     {
         if (amount <= 0f) return;
         currentLight = Mathf.Clamp(currentLight + amount, 0f, maxLight);
+    }
 
-        // (optional) brighten visuals / UI here
-        // UpdateLightVisuals();
+    public void SetMovementLocked(bool on)
+    {
+        movementLocked = on;
+
+        if (on)
+        {
+            externalPlanarAuthority = true;
+            externalPlanarVel = Vector3.zero;
+#if UNITY_6000_0_OR_NEWER
+            if (rb) rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+#else
+            if (rb) rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+#endif
+        }
+        else
+        {
+            externalPlanarAuthority = false;
+        }
+
+        if (on && isBlocking)
+        {
+            isBlocking = false;
+            if (anim)
+            {
+                if (!string.IsNullOrEmpty(blockBoolParam)) anim.SetBool(blockBoolParam, false);
+                if (!string.IsNullOrEmpty(blockEndTrigger)) { anim.ResetTrigger(blockEndTrigger); anim.SetTrigger(blockEndTrigger); }
+            }
+        }
     }
 
     public void SetInvulnerable(bool value) { invulnerable = value; }
+
+    public void SetXBounds(float min, float max, float padding = -1f)
+    {
+        minX = min; maxX = max;
+        if (padding >= 0f) xPadding = padding;
+        clampX = true;
+    }
+
+    void PlayRandomOneShot(AudioClip[] pool, float vol, Vector2 pitchRange)
+    {
+        if (_sfx == null || pool == null || pool.Length == 0) return;
+        var clip = pool[Random.Range(0, pool.Length)];
+        if (!clip) return;
+
+        _sfx.pitch = Random.Range(pitchRange.x, pitchRange.y);
+        _sfx.volume = Mathf.Clamp01(vol);
+        _sfx.PlayOneShot(clip, 1f);
+    }
+
+    void HandleFootstepsAndLanding()
+    {
+        bool grounded = IsGrounded();
+
+        if (grounded && !_wasGrounded)
+        {
+            PlayRandomOneShot(landClips, landVolume, landPitchRange);
+            _stepDistanceAccu = 0f;
+            _lastStepTime = Time.time - stepMinInterval;
+        }
+
+#if UNITY_6000_0_OR_NEWER
+        float speedAbs = Mathf.Abs(rb.linearVelocity.x);
+#else
+        float speedAbs = Mathf.Abs(rb.velocity.x);
+#endif
+        if (grounded && speedAbs >= footstepSpeedThreshold && !movementLocked)
+        {
+            _stepDistanceAccu += speedAbs * Time.deltaTime;
+            if (_stepDistanceAccu >= Mathf.Max(0.05f, stepDistance) &&
+                (Time.time - _lastStepTime) >= stepMinInterval)
+            {
+                PlayRandomOneShot(footstepClips, footstepVolume, footstepPitchRange);
+                _lastStepTime = Time.time;
+                _stepDistanceAccu = 0f;
+            }
+        }
+        else
+        {
+            _stepDistanceAccu = Mathf.Max(0f, _stepDistanceAccu - Time.deltaTime * 0.5f);
+        }
+
+        _wasGrounded = grounded;
+    }
 }
 
-/// <summary>
-/// Lives in the SAME file. Attached to the auto-created "Hurtbox" child.
-/// Forwards trigger events back to the PlayerController3D owner.
-/// </summary>
 public class ChildTriggerForwarder : MonoBehaviour
 {
     public PlayerController3D owner;

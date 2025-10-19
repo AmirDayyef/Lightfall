@@ -1,28 +1,15 @@
 using UnityEngine;
 
-/// <summary>
-/// Enables this object's collider when the player's Y position
-/// passes a defined threshold.
-/// 
-/// Attach this to the object with a Collider.
-/// </summary>
 [RequireComponent(typeof(Collider))]
 public class EnableColliderByPlayerY : MonoBehaviour
 {
-    [Header("Player Settings")]
-    [Tooltip("Tag used to find the player in the scene.")]
     public string playerTag = "Player";
     private Transform player;
 
-    [Header("Y Threshold")]
-    [Tooltip("The collider enables when player's Y > this value.")]
     public float enableAtY = 5f;
 
-    [Tooltip("If true, disables collider when player goes back below threshold.")]
     public bool disableBelow = false;
 
-    [Header("Check Frequency")]
-    [Tooltip("How often to check (0 = every frame).")]
     public float checkInterval = 0f;
     private float nextCheckTime;
 
@@ -42,8 +29,6 @@ public class EnableColliderByPlayerY : MonoBehaviour
         nextCheckTime = Time.time + checkInterval;
 
         float py = player.position.y;
-
-        // Enable when above threshold
         if (py > enableAtY && !col.enabled)
             col.enabled = true;
         else if (disableBelow && py <= enableAtY && col.enabled)

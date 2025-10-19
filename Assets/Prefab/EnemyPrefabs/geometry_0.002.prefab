@@ -117,6 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 406ea6012d50bed4d808cc230dbbcb98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sfxMixerGroup: {fileID: 2971304121141550553, guid: a996750940c82b74d8c6f4ffaab531e4, type: 2}
   maxHP: 30
   contactDamage: 1
   playerTag: Player
@@ -126,72 +127,25 @@ MonoBehaviour:
   weaponLayers:
     serializedVersion: 2
     m_Bits: 64
-  animateOnHit: 1
-  animTarget: {fileID: 0}
-  hitScale: 1.12
-  hitDuration: 0.12
-  hitShake: 0.035
-  hitCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  animateOnDeath: 1
-  deathScale: 1.25
-  deathDuration: 0.18
-  deathSpinDegrees: 12
-  deathCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  customDeathHandled: 0
+  disableCollidersOnCustomDeath: 1
+  spawnVFXOnCustomDeath: 0
+  sameColliderHitCooldown: 0.05
+  alwaysFacePlayer: 1
+  faceYAxisOnly: 1
+  faceSpeedDegPerSec: 720
+  snapToColliderBase: 1
+  colliderBaseExtraYOffset: 0.02
+  vfxYOffset: 0
   spawnShadowPuff: 0
   puffBurstCount: 30
-  puffDuration: 0.6
   puffStartLifetime: 0.4
   puffStartSpeed: {x: 1.5, y: 2.8}
   puffStartSize: {x: 0.22, y: 0.38}
   puffSphereRadius: 0.5
   puffColor: {r: 1, g: 1, b: 1, a: 0.85}
   puffSortingLayer: Effects
+  puffKeepSeconds: 1.5
   spawnHomingSouls: 1
   soulCount: 20
   soulLifetime: 3
@@ -201,5 +155,34 @@ MonoBehaviour:
   soulEndSize: 0.06
   soulColor: {r: 1, g: 1, b: 1, a: 0.85}
   soulSortingLayer: Effects
-  extraDespawnTime: 0.3
-  sameColliderHitCooldown: 0.05
+  soulDestination: {fileID: 0}
+  soulDestinationTag: 
+  resolveDestinationInAwake: 1
+  healPlayerOnSoulArrival: 1
+  healPerSoul: 2
+  lightPerSoul: 0
+  isBossHPReadable: 0
+  allowExternalSetHP: 0
+  hitClips: []
+  hitPitchRange: {x: 0.95, y: 1.05}
+  hitVolume: 0.9
+  deathClips: []
+  deathPitchRange: {x: 0.95, y: 1.05}
+  deathVolume: 1
+  contactHitPlayerClips: []
+  contactPitchRange: {x: 0.95, y: 1.05}
+  contactVolume: 0.9
+  attackClips: []
+  attackPitchRange: {x: 0.98, y: 1.02}
+  attackVolume: 1
+  movementLoopEnabled: 0
+  movementLoopClip: {fileID: 0}
+  movementLoopVolume: 0.35
+  movementSpeedThreshold: 0.05
+  useRigidbodySpeed: 1
+  movementFadeTime: 0.15
+  audio3D: 0
+  spatialBlend: 1
+  minDistance: 1.5
+  maxDistance: 12
+  ignoreListenerPause: 1

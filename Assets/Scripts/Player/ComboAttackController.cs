@@ -6,6 +6,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class ComboAttackControllerSimple : MonoBehaviour
 {
+    [HideInInspector] public bool frozen = false;
+
     public enum Btn { Light, Heavy }
     public enum ApplyPlanarMode { ReplacePlanar, AddAcceleration }
 
@@ -136,6 +138,13 @@ public class ComboAttackControllerSimple : MonoBehaviour
 
     void Update()
     {
+        if (frozen)
+        {
+            // make sure nothing progresses / no inputs are consumed
+            DisableAllHitboxes();
+            return;
+        }
+
         // ---- inputs + buffer ----
         if (Input.GetButtonDown(lightInput)) Buffer(Btn.Light);
         if (Input.GetButtonDown(heavyInput)) Buffer(Btn.Heavy);
@@ -197,6 +206,7 @@ public class ComboAttackControllerSimple : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (frozen) return;
         // Apply forward curve ONLY while the active attack state is playing
         var st = animator ? animator.GetCurrentAnimatorStateInfo(BaseLayer) : default;
 
@@ -367,6 +377,19 @@ public class ComboAttackControllerSimple : MonoBehaviour
             {
                 if (arr[i].collider) arr[i].collider.enabled = false;
             }
+        }
+    }
+    public void SetFrozen(bool on)
+    {
+        if (frozen == on) return;
+        frozen = on;
+
+        if (on)
+        {
+            DisableAllHitboxes();     // ensure no stray damage
+                                      // Optionally stop planar on freeze
+            if (rb && stopPlanarOnExit)
+                rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
         }
     }
 

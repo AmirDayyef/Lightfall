@@ -10,15 +10,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 17.669142
+      value: -7.6435537
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -10.895541
+      value: -10.595539
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.8739548
+      value: -7.1405325
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
       propertyPath: m_LocalRotation.w
@@ -51,6 +51,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
       propertyPath: m_Name
       value: geometry_0.003
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f41f976cbc4591945bc3b5fbd3d125ae, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -104,8 +108,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 406ea6012d50bed4d808cc230dbbcb98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sfxMixerGroup: {fileID: 2971304121141550553, guid: a996750940c82b74d8c6f4ffaab531e4, type: 2}
   maxHP: 20
   contactDamage: 10
+  gateEpsilonPct: 0.2
   playerTag: Player
   preferWeaponHitbox: 1
   defaultWeaponDamage: 10
@@ -113,72 +119,25 @@ MonoBehaviour:
   weaponLayers:
     serializedVersion: 2
     m_Bits: 64
-  animateOnHit: 1
-  animTarget: {fileID: 0}
-  hitScale: 1.12
-  hitDuration: 0.12
-  hitShake: 0.035
-  hitCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  animateOnDeath: 1
-  deathScale: 1.25
-  deathDuration: 0.18
-  deathSpinDegrees: 12
-  deathCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  customDeathHandled: 0
+  disableCollidersOnCustomDeath: 1
+  spawnVFXOnCustomDeath: 0
+  sameColliderHitCooldown: 0.05
+  alwaysFacePlayer: 1
+  faceYAxisOnly: 1
+  faceSpeedDegPerSec: 720
+  snapToColliderBase: 1
+  colliderBaseExtraYOffset: 0.02
+  vfxYOffset: 0
   spawnShadowPuff: 1
   puffBurstCount: 30
-  puffDuration: 0.6
   puffStartLifetime: 0.4
   puffStartSpeed: {x: 1.5, y: 2.8}
   puffStartSize: {x: 0.22, y: 0.38}
   puffSphereRadius: 0.25
-  puffColor: {r: 0, g: 0, b: 0, a: 0.85}
+  puffColor: {r: 1, g: 1, b: 1, a: 0.85}
   puffSortingLayer: Effects
+  puffKeepSeconds: 1.5
   spawnHomingSouls: 1
   soulCount: 10
   soulLifetime: 1.4
@@ -186,10 +145,42 @@ MonoBehaviour:
   soulArcJitter: 0.6
   soulStartSize: 0.18
   soulEndSize: 0.06
-  soulColor: {r: 0, g: 0, b: 0, a: 0.85}
+  soulColor: {r: 1, g: 1, b: 1, a: 0.85}
   soulSortingLayer: Effects
-  extraDespawnTime: 0.3
-  sameColliderHitCooldown: 0.05
+  soulDestination: {fileID: 0}
+  soulDestinationTag: 
+  resolveDestinationInAwake: 1
+  healPlayerOnSoulArrival: 1
+  healPerSoul: 2
+  lightPerSoul: 0
+  isBossHPReadable: 0
+  allowExternalSetHP: 0
+  hitClips:
+  - {fileID: 8300000, guid: 558bf2770b9dd6444b97ea512e0dddc2, type: 3}
+  hitPitchRange: {x: 0.95, y: 1.05}
+  hitVolume: 0.9
+  deathClips:
+  - {fileID: 8300000, guid: 2aefe36a01a973940b76cc8b6aa30751, type: 3}
+  deathPitchRange: {x: 0.95, y: 1.05}
+  deathVolume: 1
+  contactHitPlayerClips:
+  - {fileID: 8300000, guid: f9b1187cba1694a46b6ec09a997b083e, type: 3}
+  contactPitchRange: {x: 0.95, y: 1.05}
+  contactVolume: 0.9
+  attackClips: []
+  attackPitchRange: {x: 0.98, y: 1.02}
+  attackVolume: 1
+  movementLoopEnabled: 1
+  movementLoopClip: {fileID: 8300000, guid: f9b1187cba1694a46b6ec09a997b083e, type: 3}
+  movementLoopVolume: 1
+  movementSpeedThreshold: 0.05
+  useRigidbodySpeed: 0
+  movementFadeTime: 0.15
+  audio3D: 0
+  spatialBlend: 1
+  minDistance: 1.5
+  maxDistance: 12
+  ignoreListenerPause: 0
 --- !u!114 &5001244793755770132
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,8 +216,18 @@ MonoBehaviour:
   ascendWorldY: 9
   ascendSpeed: 11.5
   ascendYThreshold: 0.06
+  clampZ: 1
+  minZ: -14.29
+  maxZ: 1
   visual: {fileID: 0}
+  enableVisualFacing: 1
   faceTurnSpeed: 14
-  bankAmount: 22
-  bankLerp: 10
+  enableScaleAnim: 1
+  orbitPulseAmount: 0.311
+  orbitPulseHz: 2.2
+  rushForwardStretch: 0.506
+  rushScaleLerp: 12
+  ascendVerticalStretch: 0.354
+  ascendScaleLerp: 8
+  relaxScaleLerp: 10
   drawDebug: 0
