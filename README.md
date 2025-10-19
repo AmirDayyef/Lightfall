@@ -62,4 +62,4 @@ Here are a few screenshots from early prototypes and testing phases:
 
 | Prototype | Description |
 |------------|--------------|
-| ![Prototypes](https://i.imgur.com/XbTkdMC.png) | 2D scenes and assets animated and built before switching to 3D |
+| [![Prototypes Album](https://i.imgur.com/XbTkdMC.jpg)](https://imgur.com/a/XbTkdMC) | Click the image to view the full development album — 2D scenes and assets animated and built before switching to 3D. |
