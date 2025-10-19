@@ -66,6 +66,4 @@ Here are a few screenshots from early prototypes and testing phases:
 
 | Prototype | Description |
 |------------|--------------|
-| ![Cave Prototype](Images/cave_dev.png) | First playable test inside the cave — basic lighting and movement. |
-| ![Ghost AI Test](Images/ghost_test.png) | Early ghost possession mechanic test. |
-| ![Boss Arena](Images/boss_arena.png) | Initial design for the final boss arena before lighting pass. |
+| ![Prototypes](https://imgur.com/a/XbTkdMC) | 2D Scenes and assets animated and built before switching to 3d |
