@@ -534,7 +534,7 @@ MonoBehaviour:
   introClip: {fileID: 0}
   introVolume: 0
   introFadeIn: 0.5
-  loopClip: {fileID: 8300000, guid: 81f8debfef9054e4fb2b09e7bb7309ee, type: 3}
+  loopClip: {fileID: 8300000, guid: b80b21dd36a0b404cbee4bfbea14606a, type: 3}
   loopVolume: 1
   loopFadeIn: 0.75
   loopMusic: 1
